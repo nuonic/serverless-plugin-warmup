@@ -135,7 +135,7 @@ function logVerbose(str) {
 /**
  * Invoke with a timeout using AbortController.
  */
-async function invokeWithTimeout(command, timeoutMs = 1000) {
+async function invokeWithTimeout(command, timeoutMs = 10000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -192,7 +192,7 @@ export const warmUp = async (event, context) => {
         await Promise.all(
           Array(concurrency)
             .fill(0)
-            .map(async () => await invokeWithTimeout(invokeCommand, 1000))
+            .map(async () => await invokeWithTimeout(invokeCommand, 10000))
         );
         logVerbose(\`Warm Up Invoke Success: \${func.name}\`);
         return true;
