@@ -192,7 +192,7 @@ export const warmUp = async (event, context) => {
         await Promise.all(
           Array(concurrency)
             .fill(0)
-            .map(async () => await invokeWithTimeout(invokeCommand, 10000))
+            .map(async () => await invokeWithTimeout(invokeCommand, 29000))
         );
         logVerbose(\`Warm Up Invoke Success: \${func.name}\`);
         return true;
