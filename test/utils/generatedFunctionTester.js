@@ -10,8 +10,9 @@ class GeneratedFunctionTester {
       LambdaClient: class LambdaClient {
         constructor(config) {
           aws.config = config;
-          this.send = jest.fn().mockReturnValue(Promise.resolve());
-          lambdaInstances.push(this.send);
+          const invoke = jest.fn().mockResolvedValue({ StatusCode: 200 });
+          this.send = (command) => invoke(command);
+          lambdaInstances.push(invoke);
         }
       },
       InvokeCommand: class InvokeCommand {
@@ -39,12 +40,12 @@ class GeneratedFunctionTester {
       ${this.func
     .replaceAll(/import (\{.*\}) from ('.*');/g, 'const $1 = require($2);')
     .replace('export const warmUp', 'module.exports.warmUp')}
-      module.exports.warmUp();
+      return module.exports.warmUp({}, { getRemainingTimeInMillis: () => 30000 });
     `);
   }
 
   executeWarmupFunction(args = {}) {
-    this.generatedWarmupFunction()(
+    return this.generatedWarmupFunction()(
       {
         '@aws-sdk/client-lambda': this.aws,
         '@smithy/node-http-handler': { NodeHttpHandler: class NodeHttpHandler {} },

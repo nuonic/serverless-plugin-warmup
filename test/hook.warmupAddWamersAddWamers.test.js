@@ -1396,7 +1396,7 @@ describe('Serverless warmup plugin warmup:warmers:addWarmers:addWarmers hook', (
           warmup: {
             default: {
               enabled: true,
-              timeout: 30,
+              timeout: 45,
             },
           },
         },
@@ -1411,8 +1411,19 @@ describe('Serverless warmup plugin warmup:warmers:addWarmers:addWarmers hook', (
 
     expect(plugin.serverless.service.functions.warmUpPluginDefault)
       .toEqual(getExpectedFunctionConfig({
-        timeout: 30,
+        timeout: 45,
       }));
+  });
+
+  it('Should pass a configured invocation deadline into the generated runtime', async () => {
+    const serverless = getServerlessConfig({ service: {
+      custom: { warmup: { default: { enabled: true, invokeTimeout: 7 } } },
+      functions: { target: { name: 'target' } },
+    } });
+    const plugin = new WarmUp(serverless, {}, getPluginUtils());
+    await plugin.hooks['before:warmup:addWarmers:addWarmers']();
+    await plugin.hooks['warmup:addWarmers:addWarmers']();
+    expect(fs.writeFile.mock.calls[0][1]).toContain('const invokeTimeoutMs = 7 * 1000;');
   });
 
   it('Should unset the environment variables from options as default', async () => {

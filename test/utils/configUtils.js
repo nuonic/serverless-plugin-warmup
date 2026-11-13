@@ -89,7 +89,7 @@ function getExpectedFunctionConfig(options = {}) {
       patterns: ['!**', path.join('.warmup', warmerName, '**')],
     },
     role: 'WarmUpPluginDefaultRole',
-    timeout: 10,
+    timeout: 30,
     layers: [],
     ...options,
   };
