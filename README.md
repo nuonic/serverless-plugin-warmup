@@ -73,7 +73,8 @@ The options are the same for all the warmers:
 - **events** The event that triggers the warmer lambda. Can be any [Serverless event](https://serverless.com/framework/docs/providers/aws/events/) (defaults to `- schedule: rate(5 minutes)`)
 - **architecture** The [instruction set to use for the lambda](https://www.serverless.com/framework/docs/providers/aws/guide/functions#instruction-set-architecture) (defaults to `x86_64`)
 - **package** The package configuration. Can be any [Serverless package configuration](https://serverless.com/framework/docs/providers/aws/guide/packaging#package-configuration) (defaults to `{ individually: true, patterns: ['!**', '.warmup/${warmerName}/**'] }`)
-- **timeout** How many seconds until the warmer lambda times out. (defaults to `10`)
+- **timeout** How many seconds until the warmer lambda times out. (defaults to `30`)
+- **invokeTimeout** Maximum seconds to wait for each target invocation, including SDK retries and target initialisation (defaults to `20`). Calls are also limited to the warmer’s remaining execution time minus a two-second reserve for reporting. Calls are skipped when that reserve has been reached.
 - **environment** Can be used to set environment variables in the warmer lambda. You can also unset variables configured at the provider by setting them to undefined. However, you should almost never have to change the default. (defaults to unset all package level environment variables. )
 - **tracing** Specify whether to enable/disable tracing at the function level. When tracing is enabled, warmer functions will use NPM to install the X-Ray client and use it to trace requests (It takes any of the values supported by serverless as `boolean`, `Active`or `PassThrough` and defaults to the provider-level setting)
 - **verbose** If set to false, it disables the console.logs placed on this warmer lambda (defaults to `true`)
@@ -193,7 +194,23 @@ If you set up at the provider level or the warmer confir level that the wamer fu
 - If the subnet is private, a [Network Address Translation (NAT) gateway](http://docs.aws.amazon.com/lambda/latest/dg/vpc.html) is needed so the warmers can connect to the AWS API.
 - In either case, the security group and the network ACLs need to allow access from the warmer to the AWS API.
 
-Since the AWS SDK doesn't provide any timeout by default, this plugin uses a default connection timeout of 1 second. This is to avoid the issue of a lambda constantly timing out and consuming all its allowed duration simply because it can't connect to the AWS API.
+The generated warmer calls targets in parallel using synchronous invocations. Each call has an abort deadline covering the complete request, not just connection establishment. The defaults are a 30-second warmer timeout and a 20-second target invocation deadline. Explicit shorter warmer timeouts are honoured: each call is capped by the remaining Lambda execution time minus two seconds.
+
+The warmer waits for every invocation outcome and always logs a summary, even when `verbose` is false. The summary counts individual successful, failed and skipped calls. Target `FunctionError` responses count as failures; deadline expiry and throttling are reported separately. Timing logs identify slow targets. Aborting a request does not guarantee cancellation of an already-running target.
+
+For a service with many targets, benchmark `memorySize: 256` and `512` against the default `128`, including cold starts, before choosing a production value. Increasing memory is not a remedy for target reserved-concurrency throttling. Consider excluding background functions that do not benefit from warming.
+
+```yaml
+custom:
+  warmup:
+    default:
+      enabled: true
+      timeout: 30
+      invokeTimeout: 20
+      memorySize: 256 # Example to benchmark; the default remains 128 MB
+```
+
+When upgrading this fork, update the pinned plugin commit and lockfile in the consuming service, then inspect the packaged warmer and validate in development before deploying to production.
 
 ### Permissions
 

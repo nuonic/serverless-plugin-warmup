@@ -207,6 +207,7 @@ class WarmUp {
       warmerConfig.verbose,
       this.provider.getRegion(),
       handlerFolder,
+      warmerConfig.invokeTimeout,
     );
 
     if (warmerConfig.role === undefined) {

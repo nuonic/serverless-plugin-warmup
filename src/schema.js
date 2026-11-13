@@ -118,6 +118,7 @@ function extendServerlessSchema(serverless) {
     },
     memorySize: { $ref: '#/definitions/awsLambdaMemorySize' },
     timeout: { $ref: '#/definitions/awsLambdaTimeout' },
+    invokeTimeout: { type: 'number', exclusiveMinimum: 0, maximum: 900 },
     environment: { $ref: '#/definitions/awsLambdaEnvironment' },
     tracing: { $ref: '#/definitions/awsLambdaTracing' },
     verbose: { type: 'boolean' },

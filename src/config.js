@@ -41,6 +41,7 @@ function getWarmerConfig(config, defaultOpts) {
       },
     memorySize: (config.memorySize !== undefined) ? config.memorySize : defaultOpts.memorySize,
     timeout: (config.timeout !== undefined) ? config.timeout : defaultOpts.timeout,
+    invokeTimeout: (config.invokeTimeout !== undefined) ? config.invokeTimeout : defaultOpts.invokeTimeout,
     environment: (config.environment !== undefined)
       ? config.environment
       : defaultOpts.environment,
@@ -153,7 +154,8 @@ function getConfigsByWarmer({ service, classes }, stage) {
       individually: true,
       patterns: [],
     },
-    timeout: 10,
+    timeout: 30,
+    invokeTimeout: 20,
     environment: Object.keys(service.provider.environment || [])
       .reduce((obj, k) => ({ ...obj, [k]: undefined }), {}),
     verbose: true,
